@@ -1,12 +1,8 @@
 {
   "demo": "https://www.google.com/search?q=avis+google+exemple",
-  "barber-club":{
-  "demo": "https://www.google.com/search?q=avis+google+exemple",
   "barber-club": {
     "nom": "The Barber Club Monaco",
     "google": "https://www.google.com/maps/search/?api=1&query=The+Barber+Club+Monaco+Fontvieille",
     "instagram": "https://www.instagram.com/thebarberclub_monaco/"
   }
-}
- "https://www.google.com/maps/search/?api=1&query=The+Barber+Club+Monaco+Fontvieille"
 }
