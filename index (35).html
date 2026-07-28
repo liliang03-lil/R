@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirection...</title>
+  <style>
+    :root{
+      --fond:#0d1621;      /* ta couleur ProTap sombre */
+      --or:#C9A84C;
+      --or-clair:#E8C97A;
+      --creme:#F0EDE6;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:var(--fond);
+      color:var(--creme);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:24px;
+      min-height:100vh;
+    }
+    .spinner{
+      width:46px;height:46px;
+      border:3px solid rgba(201,168,76,.25);
+      border-top-color:var(--or);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+      margin-bottom:22px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    h1{font-size:1.05rem;font-weight:600;letter-spacing:.3px;color:var(--creme)}
+    p{margin-top:10px;font-size:.85rem;opacity:.65}
+    a.btn{
+      display:none;margin-top:26px;padding:13px 26px;
+      background:var(--or);color:var(--fond);
+      text-decoration:none;font-weight:700;border-radius:10px;
+      font-size:.95rem;
+    }
+    .err h1{color:var(--or-clair)}
+  </style>
+</head>
+<body>
+  <div class="spinner" id="spin"></div>
+  <h1 id="msg">Redirection en cours…</h1>
+  <p id="sub">Merci de patienter une seconde</p>
+  <a class="btn" id="fallback" href="#">Continuer &rarr;</a>
+
+  <script>
+  (function () {
+    // ---- CONFIG : à remplir une seule fois ----
+    // URL de ton Google Apps Script déployé (voir MODE-EMPLOI.md, étape 3).
+    // Laisse vide ("") tant que tu ne l'as pas : la redirection marchera quand même,
+    // seul le comptage des scans sera désactivé.
+    var SCRIPT_URL = "";
+
+    // 1) Récupère l'id dans l'URL : ...?id=barber-nice-01
+    var params = new URLSearchParams(window.location.search);
+    var id = (params.get("id") || "").trim();
+
+    var msg = document.getElementById("msg");
+    var sub = document.getElementById("sub");
+    var spin = document.getElementById("spin");
+    var fb  = document.getElementById("fallback");
+
+    function erreur(texte) {
+      document.body.classList.add("err");
+      spin.style.display = "none";
+      msg.textContent = texte;
+      sub.textContent = "Contactez le responsable de cette plaque.";
+    }
+
+    if (!id) { erreur("Plaque non configurée"); return; }
+
+    // 2) Charge la table des destinations (id -> lien Google du commerçant)
+    fetch("destinations.json?v=" + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (dest) {
+        var cible = dest[id];
+        if (!cible) { erreur("Plaque inconnue"); return; }
+
+        // 3) Compte le scan (envoi "fire and forget", ne bloque JAMAIS la redirection)
+        if (SCRIPT_URL) {
+          try {
+            var img = new Image();
+            img.src = SCRIPT_URL
+              + "?id=" + encodeURIComponent(id)
+              + "&t="  + Date.now()
+              + "&ref="+ encodeURIComponent(document.referrer || "");
+          } catch (e) { /* on ignore, la redirection prime */ }
+        }
+
+        // 4) Prépare le bouton de secours (si la redirection auto est bloquée)
+        fb.href = cible;
+        fb.style.display = "inline-block";
+
+        // 5) Redirige (petit délai pour laisser partir le beacon de comptage)
+        setTimeout(function () { window.location.replace(cible); }, 250);
+      })
+      .catch(function () {
+        erreur("Erreur de chargement");
+      });
+  })();
+  </script>
+</body>
+</html>
